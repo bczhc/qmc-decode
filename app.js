@@ -10,6 +10,13 @@ const $input = document.getElementById("input");
 const $dl = document.getElementById("download");
 const $player = document.getElementById("player");
 
+function setInProgress(inProgress) {
+  $input.disabled = $player.disabled = inProgress;
+  if (inProgress) {
+    $player.pause();
+  }
+}
+
 async function decryptMGG(mggBlob, name) {
   const QMCCrypto = await QMCCryptoModule();
 
@@ -64,7 +71,7 @@ async function decryptMGG(mggBlob, name) {
       await new Promise((resolve) => setTimeout(resolve));
     }
     QMCCrypto._free(buf);
-    // TODO: free hCrypto
+    hCrypto.delete();
 
     const isOGG = /\.mgg\d?$/.test(name);
     const isFLAC = /\.mflac\d?$/.test(name);
@@ -81,38 +88,90 @@ async function decryptMGG(mggBlob, name) {
   }
 }
 
-async function main() {
-  $input.onchange = () => {
-    const file = $input.files[0];
-    const name = file.name;
-    const reader = new FileReader();
-    reader.addEventListener("load", (e) => {
-      if (lastURL) {
-        URL.revokeObjectURL(lastURL);
-      }
+function processFile(file) {
+  setInProgress(true);
+  const name = file.name;
+  const reader = new FileReader();
+  reader.addEventListener("abort", () => {
+    setInProgress(false);
+  });
+  reader.addEventListener("error", (err) => {
+    setInProgress(false);
+    console.error(err);
+    alert("读取文件失败：" + err.message);
+  });
+  reader.addEventListener("load", (e) => {
+    if (lastURL) {
+      URL.revokeObjectURL(lastURL);
+      lastURL = "";
+    }
 
-      decryptMGG(e.target.result, name)
-        .then(([blobs, newFileName, mimeType]) => {
-          if (!blobs) return;
+    decryptMGG(e.target.result, name)
+      .then(([blobs, newFileName, mimeType]) => {
+        if (!blobs) return;
 
-          const blob = new Blob(blobs, {
-            type: mimeType,
-          });
-
-          const url = (lastURL = window.URL.createObjectURL(blob));
-          $player.src = url;
-
-          $dl.href = url;
-          $dl.textContent = newFileName;
-          $dl.download = newFileName;
-        })
-        .catch((err) => {
-          alert("解密失败。\n" + err.message);
-          console.error(err);
+        const blob = new Blob(blobs, {
+          type: mimeType,
         });
-    });
-    reader.readAsArrayBuffer(file);
+
+        const url = (lastURL = window.URL.createObjectURL(blob));
+        $player.src = url;
+
+        $dl.href = url;
+        $dl.textContent = newFileName;
+        $dl.download = newFileName;
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("解密失败：\n" + err.message);
+      })
+      .then(() => {
+        setInProgress(true);
+      });
+  });
+  reader.readAsArrayBuffer(file);
+}
+
+function main() {
+  $input.onchange = () => {
+    processFile($input.files[0]);
   };
+
+  let dragCounter = 0;
+  function updateDragCounter(delta) {
+    dragCounter += delta;
+    document.body.classList.toggle("dragging", dragCounter > 0);
+  }
+
+  function handleDragEffect(e) {
+    if (e.dataTransfer.types.includes("Files")) {
+      e.dataTransfer.dropEffect = "copy";
+      e.preventDefault();
+    } else {
+      e.dataTransfer.effectAllowed = false;
+      e.dataTransfer.dropEffect = "none";
+    }
+  }
+
+  document.body.addEventListener("dragenter", (e) => {
+    updateDragCounter(+1);
+    handleDragEffect(e);
+    e.preventDefault();
+  });
+
+  document.body.addEventListener("drop", (e) => {
+    e.preventDefault();
+    updateDragCounter(-1);
+    processFile(e.dataTransfer.files[0]);
+  });
+
+  document.body.addEventListener("dragover", (e) => {
+    handleDragEffect(e);
+  });
+
+  document.body.addEventListener("dragleave", () => {
+    updateDragCounter(-1);
+  });
 }
 
 main();

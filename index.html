@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="keywords" content="mgg, mgg0, mgg1, mflac, mflac1" />
+    <meta name="description" content="解密 mgg 文件, 解密 mflac 文件" />
     <title>QMC2-WASM</title>
     <style>
       html,
@@ -37,9 +39,7 @@
       }
 
       input {
-        border: 1px solid #ccc;
-        padding: 0.5em;
-        border-radius: 5px;
+        display: none;
       }
 
       #dragroot {
@@ -49,21 +49,45 @@
         width: 100vw;
         position: fixed;
         pointer-events: none;
+
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .dragging #dragroot {
+        opacity: 1;
+        z-index: 1;
+        background: #0003;
+      }
+
+      .dragging #dragroot::after {
+        text-align: center;
+        content: "放开文件解密 (单文件)";
+        padding: 1em 2em;
+        border-radius: 0.5em;
+        border: 1px solid #ccc;
+        background-color: beige;
+        top: 3em;
+        left: 50%;
+        position: absolute;
+        transform: translateX(-50%);
       }
     </style>
   </head>
   <body>
     <div id="dragroot"></div>
     <header>
-      <h1>QMC2-WASM 实验性应用</h1>
+      <h1>QMC2-WASM <small>(实验性)</small></h1>
     </header>
 
     <main>
+      <p>用于解密 <code>mflac</code> 与 <code>mgg</code> 文件的小工具。</p>
       <p>
-        请选择一个文件进行解密，支持 <code>mflac</code> 与
-        <code>mgg</code> 格式。
+        <label>
+          <input type="file" id="input" />
+          <button type="button" id="btn_start">选择需要解密的文件</button>
+        </label>
       </p>
-      <p><input type="file" id="input" /></p>
       <p><progress id="prog" max="100" value="0"></progress></p>
       <p><audio id="player" controls></audio></p>
       <p><a href="" id="download"></a></p>

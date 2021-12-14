@@ -98,7 +98,7 @@ function processFile(file) {
   reader.addEventListener("error", (err) => {
     setInProgress(false);
     console.error(err);
-    alert("读取文件失败：" + err.message);
+    alert("读取文件失败: " + err.message);
   });
   reader.addEventListener("load", (e) => {
     if (lastURL) {
@@ -123,10 +123,10 @@ function processFile(file) {
       })
       .catch((err) => {
         console.error(err);
-        alert("解密失败：\n" + err.message);
+        alert("解密失败: \n" + err.message);
       })
       .then(() => {
-        setInProgress(true);
+        setInProgress(false);
       });
   });
   reader.readAsArrayBuffer(file);
@@ -152,6 +152,10 @@ function main() {
       e.dataTransfer.dropEffect = "none";
     }
   }
+
+  document.getElementById("btn_start").onclick = () => {
+    $input.click();
+  };
 
   document.body.addEventListener("dragenter", (e) => {
     updateDragCounter(+1);

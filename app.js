@@ -91,8 +91,8 @@ async function main() {
         URL.revokeObjectURL(lastURL);
       }
 
-      decryptMGG(e.target.result, name).then(
-        ([blobs, newFileName, mimeType]) => {
+      decryptMGG(e.target.result, name)
+        .then(([blobs, newFileName, mimeType]) => {
           if (!blobs) return;
 
           const blob = new Blob(blobs, {
@@ -105,11 +105,11 @@ async function main() {
           $dl.href = url;
           $dl.textContent = newFileName;
           $dl.download = newFileName;
-        }
-      ).catch((err) => {
-        alert("解密失败。\n" + err.message);
-        console.error(err);
-      });
+        })
+        .catch((err) => {
+          alert("解密失败。\n" + err.message);
+          console.error(err);
+        });
     });
     reader.readAsArrayBuffer(file);
   };

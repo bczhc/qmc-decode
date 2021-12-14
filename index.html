@@ -1,37 +1,48 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QMC2-WASM</title>
-</head>
-<body>
-  <header>
-    <h1>QMC2-WASM 实验性应用</h1>
-  </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QMC2-WASM</title>
+    <style>
+      header,
+      main,
+      footer {
+        text-align: center;
+        max-width: 30em;
+        margin: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>QMC2-WASM 实验性应用</h1>
+    </header>
 
-  <main>
-    <p>请选择一个文件进行解密，支持 <code>mflac</code> 与 <code>mgg</code> 格式。</p>
-    <p><input type="file" id="input"></p>
-    <p><progress id="prog" max="100" value="0"></progress></p>
-    <p><audio id="player" controls></audio></p>
-    <p><a href="" id="download"></a></p>
-    <hr>
-  </main>
+    <main>
+      <p>
+        请选择一个文件进行解密，支持 <code>mflac</code> 与
+        <code>mgg</code> 格式。
+      </p>
+      <p><input type="file" id="input" /></p>
+      <p><progress id="prog" max="100" value="0"></progress></p>
+      <p><audio id="player" controls></audio></p>
+      <p><a href="" id="download"></a></p>
+      <hr />
+    </main>
 
-  <footer style="color: #777; font-size: small;">
-    <p style="font-style: italic;">
-      Part of
-      <a target="_blank" href="https://github.com/jixunmoe/qmc2/">QMC2</a>
-      project, licensed under the
-      <a href="https://github.com/jixunmoe/qmc2/blob/main/LICENSE">MIT License</a>.
-    </p>
-  </footer>
+    <footer style="color: #777; font-size: small">
+      <p style="font-style: italic">
+        Part of
+        <a target="_blank" href="https://github.com/jixunmoe/qmc2/">QMC2</a>
+        project, licensed under the
+        <a href="https://github.com/jixunmoe/qmc2/blob/main/LICENSE"
+          >MIT License</a
+        >.
+      </p>
+    </footer>
 
-  <script src="./QMC2-wasm.js"></script>
-  <script src="./app.js"></script>
-  <style>
-    header, main, footer { text-align: center; max-width: 30em; margin: auto; }
-  </style>
-</body>
+    <script src="./QMC2-wasm.js"></script>
+    <script src="./app.js"></script>
+  </body>
 </html>

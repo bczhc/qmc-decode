@@ -80,7 +80,7 @@ async function decryptMGG(mggBlob, name) {
     return [
       decryptedParts,
       newFileName,
-      newExt === "bin" ? "appli" : `audio/${newExt}`,
+      newExt === "bin" ? "application/octet-stream" : `audio/${newExt}`,
     ];
   } else {
     alert("ERROR: could not decrypt\n       " + detectionError);

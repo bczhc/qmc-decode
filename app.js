@@ -1,3 +1,4 @@
+// EOF Magic detection.
 const DETECTION_SIZE = 40;
 
 // Process in 2m buffer size
@@ -17,80 +18,138 @@ function setInProgress(inProgress) {
   }
 }
 
-async function decryptMGG(mggBlob, name) {
+const getMagic = (u8) => {
+  return u8.slice(0, 4).reduce((result, byte, position) => {
+    return result | (byte << (position * 8));
+  }, 0);
+};
+
+/**
+ * 根据解密后的文件解析，获得新的文件名及对应 mimetype。
+ * @param  {Uint8Array[]} u8Array 解密后的文件片段集合
+ * @param  {string} fileName 原始文件名
+ * @return {[string, string]} 新的文件名以及 mimetype。
+ */
+function fileDetection(u8Array, fileName) {
+  const oggMagic = 0x5367674f;
+  const flacMagic = 0x43614c66;
+
+  const magic = getMagic(u8Array[0]);
+
+  // 未能识别时的返回内容
+  let ext = '.bin';
+  let mimeType = 'application/octet-stream';
+
+  switch(magic) {
+    case oggMagic:
+      ext = '.ogg';
+      mimeType = 'audio/ogg';
+      break;
+    case flacMagic:
+      ext = '.flac';
+      mimeType = 'audio/flac';
+      break;
+  }
+
+  const newFileName = fileName.replace(/(\.[^.]+)?$/, ext);
+  return [newFileName, mimeType];
+}
+
+/**
+ * 解密一个 QMC2 加密的文件。
+ *
+ * 如果检测并解密成功，返回解密后的 Uint8Array 数组，按顺序拼接即可得到完整文件。
+ * 若失败，返回 `null`。
+ * @param  {Blob} mggBlob 读入的文件 Blob
+ * @param  {string} name  文件名
+ * @return {Promise<Uint8Array[]|null>}
+ */
+async function decryptMGG(mggBlob) {
+  // 初始化模组
   const QMCCrypto = await QMCCryptoModule();
 
-  const detectionBlob = new Uint8Array(mggBlob.slice(-DETECTION_SIZE));
+  // 申请内存块，并文件末端数据到 WASM 的内存堆
+  const detectionBuf = new Uint8Array(mggBlob.slice(-DETECTION_SIZE));
+  const pDetectionBuf = QMCCrypto._malloc(detectionBuf.length);
+  QMCCrypto.writeArrayToMemory(detectionBuf, pDetectionBuf);
 
-  const detectionBuf = QMCCrypto._malloc(detectionBlob.length);
-  QMCCrypto.writeArrayToMemory(detectionBlob, detectionBuf);
-  const detectionResult = QMCCrypto._malloc(QMCCrypto.sizeof_qmc_detection());
-  const ok = QMCCrypto.detectKeyEndPosition(
-    detectionResult,
-    detectionBuf,
-    detectionBlob.length
+  // 检测结果内存块
+  const pDetectionResult = QMCCrypto._malloc(QMCCrypto.sizeof_qmc_detection());
+
+  // 进行检测
+  const detectOK = QMCCrypto.detectKeyEndPosition(
+    pDetectionResult,
+    pDetectionBuf,
+    detectionBuf.length
   );
-  const position = QMCCrypto.getValue(detectionResult, "i32");
-  const len = QMCCrypto.getValue(detectionResult + 4, "i32");
-  const detectionError = QMCCrypto.UTF8ToString(detectionResult + 8);
 
-  QMCCrypto._free(detectionBuf);
-  QMCCrypto._free(detectionResult);
+  // 提取结构体内容：
+  // (pos: i32; len: i32; error: char[??])
+  const position = QMCCrypto.getValue(pDetectionResult, "i32");
+  const len = QMCCrypto.getValue(pDetectionResult + 4, "i32");
+  const detectionError = QMCCrypto.UTF8ToString(pDetectionResult + 8);
 
-  if (ok) {
+  // 释放内存
+  QMCCrypto._free(pDetectionBuf);
+  QMCCrypto._free(pDetectionResult);
+
+  if (detectOK) {
+    // 计算解密后文件的大小。
+    // 之前得到的 position 为相对当前检测数据起点的偏移。
     const decryptedSize = mggBlob.byteLength - DETECTION_SIZE + position;
+    $prog.max = decryptedSize;
+
+    // 提取嵌入到文件的 EKey
     const ekey = new Uint8Array(
       mggBlob.slice(decryptedSize, decryptedSize + len)
     );
 
+    // 解码 UTF-8 数据到 string
     const decoder = new TextDecoder();
     const ekey_b64 = decoder.decode(ekey);
-    const hCrypto = QMCCrypto.createInstWidthEKey(ekey_b64);
 
-    $prog.max = decryptedSize;
-    const decryptedParts = [];
+    // 初始化加密与缓冲区
+    const hCrypto = QMCCrypto.createInstWidthEKey(ekey_b64);
     const buf = QMCCrypto._malloc(DECRYPTION_BUF_SIZE);
-    let bytesToDecrypt = decryptedSize;
+
+    const decryptedParts = [];
     let offset = 0;
+    let bytesToDecrypt = decryptedSize;
     while (bytesToDecrypt > 0) {
       const blockSize = Math.min(bytesToDecrypt, DECRYPTION_BUF_SIZE);
 
+      // 解密一些片段
       const blockData = new Uint8Array(
         mggBlob.slice(offset, offset + blockSize)
       );
       QMCCrypto.writeArrayToMemory(blockData, buf);
-
       QMCCrypto.decryptStream(hCrypto, buf, offset, blockSize);
-
       decryptedParts.push(QMCCrypto.HEAPU8.slice(buf, buf + blockSize));
 
       offset += blockSize;
       bytesToDecrypt -= blockSize;
       $prog.value = offset;
 
+      // 避免网页卡死，让 event loop 处理一下其它事件。
       await new Promise((resolve) => setTimeout(resolve));
     }
     QMCCrypto._free(buf);
     hCrypto.delete();
 
-    const isOGG = /\.mgg\d?$/.test(name);
-    const isFLAC = /\.mflac\d?$/.test(name);
-    const newExt = isOGG ? "ogg" : isFLAC ? "flac" : "bin";
-    const newFileName = `${name.replace(/[^.]+$/, "")}${newExt}`;
-    return [
-      decryptedParts,
-      newFileName,
-      newExt === "bin" ? "application/octet-stream" : `audio/${newExt}`,
-    ];
+    return decryptedParts;
   } else {
     alert("ERROR: could not decrypt\n       " + detectionError);
-    return [];
+    return null;
   }
 }
 
+/**
+ * 处理一个文件。
+ * @param  {File} 通过拖放或文件输入获得的文件。
+ */
 function processFile(file) {
   setInProgress(true);
-  const name = file.name;
+  const fileName = file.name;
   const reader = new FileReader();
   reader.addEventListener("abort", () => {
     setInProgress(false);
@@ -106,36 +165,61 @@ function processFile(file) {
       lastURL = "";
     }
 
-    decryptMGG(e.target.result, name)
-      .then(([blobs, newFileName, mimeType]) => {
-        if (!blobs) return;
+    decryptMGG(e.target.result).then((decryptedParts) => {
+      if (!decryptedParts) return;
 
-        const blob = new Blob(blobs, {
-          type: mimeType,
-        });
+      const [newFileName, mimeType] = fileDetection(decryptedParts, fileName);
 
-        const url = (lastURL = window.URL.createObjectURL(blob));
-        $player.src = url;
-
-        $dl.href = url;
-        $dl.textContent = newFileName;
-        $dl.download = newFileName;
-      })
-      .catch((err) => {
-        console.error(err);
-        alert("解密失败: \n" + err.message);
-      })
-      .then(() => {
-        setInProgress(false);
+      const blob = new Blob(decryptedParts, {
+        type: mimeType,
       });
+
+      const url = (lastURL = window.URL.createObjectURL(blob));
+      $player.src = url;
+
+      $dl.href = url;
+      $dl.textContent = newFileName;
+      $dl.download = newFileName;
+    })
+    .catch((err) => {
+      console.error(err);
+      alert("解密失败: \n" + err.message);
+    })
+    .then(() => {
+      setInProgress(false);
+    });
   });
   reader.readAsArrayBuffer(file);
 }
 
 function main() {
+  setInProgress(true);
+
+  ///// 加载 QMC2-Crypto 组件
+
+  // 检测 WASM 支援并加载对应文件
+  const backend = window.WebAssembly ? 'wasm' : 'legacy';
+  const qmc2Script = document.createElement('script');
+  qmc2Script.src = `./QMC2-${backend}.js`;
+  qmc2Script.onload = () => {
+    document.getElementById('qmc2-backend').textContent = backend;
+    setInProgress(false);
+  };
+  qmc2Script.onerror = () => {
+    alert('加载 QMC2-Crypto 模组失败。');
+  };
+  document.head.appendChild(qmc2Script);
+
+  // 绑定选择文件事件。
   $input.onchange = () => {
     processFile($input.files[0]);
   };
+
+  document.getElementById("btn_start").onclick = () => {
+    $input.click();
+  };
+
+  ///// 文件拖放支持
 
   let dragCounter = 0;
   function updateDragCounter(delta) {
@@ -152,10 +236,6 @@ function main() {
       e.dataTransfer.dropEffect = "none";
     }
   }
-
-  document.getElementById("btn_start").onclick = () => {
-    $input.click();
-  };
 
   document.body.addEventListener("dragenter", (e) => {
     updateDragCounter(+1);

@@ -6,73 +6,7 @@
     <meta name="keywords" content="mgg, mgg0, mgg1, mflac, mflac1" />
     <meta name="description" content="解密 mgg 文件, 解密 mflac 文件" />
     <title>QMC2-WASM</title>
-    <style>
-      html,
-      body {
-        padding: 0;
-        margin: 0;
-        font-family: "Microsoft YaHei UI Light", sans-serif;
-        min-height: 100vh;
-      }
-
-      code {
-        font-family: "Courier New", Courier, monospace;
-      }
-
-      h1 {
-        margin-top: 0;
-        padding-top: 1rem;
-      }
-
-      header,
-      main,
-      footer {
-        text-align: center;
-        max-width: 30em;
-        margin: auto;
-      }
-
-      footer {
-        font-family: sans-serif;
-        color: #777;
-        font-size: small;
-      }
-
-      input {
-        display: none;
-      }
-
-      #dragroot {
-        top: 0;
-        left: 0;
-        height: 100vh;
-        width: 100vw;
-        position: fixed;
-        pointer-events: none;
-
-        opacity: 0;
-        transition: opacity 0.3s;
-      }
-
-      .dragging #dragroot {
-        opacity: 1;
-        z-index: 1;
-        background: #0003;
-      }
-
-      .dragging #dragroot::after {
-        text-align: center;
-        content: "放开文件解密 (单文件)";
-        padding: 1em 2em;
-        border-radius: 0.5em;
-        border: 1px solid #ccc;
-        background-color: beige;
-        top: 3em;
-        left: 50%;
-        position: absolute;
-        transform: translateX(-50%);
-      }
-    </style>
+    <link rel="stylesheet" href="./app.css">
   </head>
   <body>
     <div id="dragroot"></div>
@@ -90,7 +24,7 @@
       </p>
       <p><progress id="prog" max="100" value="0"></progress></p>
       <p><audio id="player" controls></audio></p>
-      <p><a href="" id="download"></a></p>
+      <p><a href="#" id="download">没有文件</a></p>
       <hr />
     </main>
 
@@ -99,13 +33,20 @@
         Part of
         <a target="_blank" href="https://github.com/jixunmoe/qmc2/">QMC2</a>
         project, licensed under the
-        <a href="https://github.com/jixunmoe/qmc2/blob/main/LICENSE"
-          >MIT License</a
-        >.
+        <a
+          target="_blank"
+          href="https://github.com/jixunmoe/qmc2/blob/main/LICENSE"
+        >
+          MIT License
+        </a>
+        <a target="_blank" href="./source.html">(src)</a>.
       </p>
     </footer>
 
-    <script src="./QMC2-wasm.js"></script>
-    <script src="./app.js"></script>
+    <section id="backend-info">
+      QMC2-Crypto: 
+      <code id="qmc2-backend">加载中</code>
+    </section>
+    <script defer async src="./app.js"></script>
   </body>
 </html>

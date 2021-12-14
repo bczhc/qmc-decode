@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.3.1/build/styles/github.min.css">
+  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.3.1/build/highlight.min.js"></script>
+  <title>QMC2-WASM Source</title>
+</head>
+<body>
+  <pre><code id="code" class="language-js">loading...</code></pre>
+  <script defer async>
+    fetch('./app.js').then(r => r.text()).then(code => {
+      document.getElementById('code').textContent = code;
+      hljs.highlightAll();
+    });
+  </script>
+</body>
+</html>

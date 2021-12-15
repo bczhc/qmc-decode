@@ -60,8 +60,8 @@ function fileDetection(u8Array, fileName) {
  *
  * 如果检测并解密成功，返回解密后的 Uint8Array 数组，按顺序拼接即可得到完整文件。
  * 若失败，返回 `null`。
- * @param  {Blob} mggBlob 读入的文件 Blob
- * @param  {string} name  文件名
+ * @param  {ArrayBuffer} mggBlob 读入的文件 ArrayBuffer
+ * @param  {string}         name 文件名
  * @return {Promise<Uint8Array[]|null>}
  */
 async function decryptMGG(mggBlob) {

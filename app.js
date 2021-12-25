@@ -37,17 +37,17 @@ function fileDetection(u8Array, fileName) {
   const magic = getMagic(u8Array[0]);
 
   // 未能识别时的返回内容
-  let ext = '.bin';
-  let mimeType = 'application/octet-stream';
+  let ext = ".bin";
+  let mimeType = "application/octet-stream";
 
-  switch(magic) {
+  switch (magic) {
     case oggMagic:
-      ext = '.ogg';
-      mimeType = 'audio/ogg';
+      ext = ".ogg";
+      mimeType = "audio/ogg";
       break;
     case flacMagic:
-      ext = '.flac';
-      mimeType = 'audio/flac';
+      ext = ".flac";
+      mimeType = "audio/flac";
       break;
   }
 
@@ -87,7 +87,15 @@ async function decryptMGG(mggBlob) {
   // (pos: i32; len: i32; error: char[??])
   const position = QMCCrypto.getValue(pDetectionResult, "i32");
   const len = QMCCrypto.getValue(pDetectionResult + 4, "i32");
-  const detectionError = QMCCrypto.UTF8ToString(pDetectionResult + 8);
+  const detectionError = QMCCrypto.UTF8ToString(
+    pDetectionResult + QMCCrypto.offsetof_error_msg(),
+    QMCCrypto.sizeof_error_msg()
+  );
+  const songId = QMCCrypto.UTF8ToString(
+    pDetectionResult + QMCCrypto.offsetof_song_id(),
+    QMCCrypto.sizeof_song_id()
+  );
+  console.info("Deceted song id: %s", songId);
 
   // 释放内存
   QMCCrypto._free(pDetectionBuf);
@@ -165,29 +173,30 @@ function processFile(file) {
       lastURL = "";
     }
 
-    decryptMGG(e.target.result).then((decryptedParts) => {
-      if (!decryptedParts) return;
+    decryptMGG(e.target.result)
+      .then((decryptedParts) => {
+        if (!decryptedParts) return;
 
-      const [newFileName, mimeType] = fileDetection(decryptedParts, fileName);
+        const [newFileName, mimeType] = fileDetection(decryptedParts, fileName);
 
-      const blob = new Blob(decryptedParts, {
-        type: mimeType,
+        const blob = new Blob(decryptedParts, {
+          type: mimeType,
+        });
+
+        const url = (lastURL = window.URL.createObjectURL(blob));
+        $player.src = url;
+
+        $dl.href = url;
+        $dl.textContent = newFileName;
+        $dl.download = newFileName;
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("解密失败: \n" + err.message);
+      })
+      .then(() => {
+        setInProgress(false);
       });
-
-      const url = (lastURL = window.URL.createObjectURL(blob));
-      $player.src = url;
-
-      $dl.href = url;
-      $dl.textContent = newFileName;
-      $dl.download = newFileName;
-    })
-    .catch((err) => {
-      console.error(err);
-      alert("解密失败: \n" + err.message);
-    })
-    .then(() => {
-      setInProgress(false);
-    });
   });
   reader.readAsArrayBuffer(file);
 }
@@ -198,15 +207,15 @@ function main() {
   ///// 加载 QMC2-Crypto 组件
 
   // 检测 WASM 支援并加载对应文件
-  const backend = window.WebAssembly ? 'wasm' : 'legacy';
-  const qmc2Script = document.createElement('script');
+  const backend = window.WebAssembly ? "wasm" : "legacy";
+  const qmc2Script = document.createElement("script");
   qmc2Script.src = `./QMC2-${backend}.js`;
   qmc2Script.onload = () => {
-    document.getElementById('qmc2-backend').textContent = backend;
+    document.getElementById("qmc2-backend").textContent = backend;
     setInProgress(false);
   };
   qmc2Script.onerror = () => {
-    alert('加载 QMC2-Crypto 模组失败。');
+    alert("加载 QMC2-Crypto 模组失败。");
   };
   document.head.appendChild(qmc2Script);
 

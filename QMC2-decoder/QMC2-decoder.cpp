@@ -12,6 +12,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <cassert>
 
 // 1M buffer
 constexpr size_t read_buf_len = 1 * 1024 * 1024;
@@ -33,15 +34,47 @@ StreamCencrypt *createInstWidthEKey(const char *ekey_b64)
   return stream;
 }
 
+void decodeWithEKey(const char *input, const char* output, const char* ekey) {
+    auto fp_in = fopen(input, "rb");
+    auto fp_out = fopen(output, "wb");
+    if (fp_in == nullptr || fp_out == nullptr) {
+        perror("Failed to open file");
+    }
+
+    auto stream = createInstWidthEKey(ekey);
+
+    size_t offset = 0;
+    char buf[read_buf_len];
+    size_t read_size;
+    while ((read_size = fread(buf, 1, read_buf_len, fp_in)) > 0) {
+        stream->StreamDecrypt(offset, (uint8_t *) buf, read_size);
+        size_t size = fwrite(buf, 1, read_size, fp_out);
+        assert(size == read_size);
+        offset += read_size;
+    }
+
+    if (fclose(fp_in) != 0 || fclose(fp_out) != 0) {
+        perror("Failed to close file");
+    }
+
+    delete stream;
+}
+
 int main(int argc, char **argv)
 {
   fprintf(stderr, "QMC2 decoder (cli) v0.0.6 by Jixun\n\n");
 
-  if (argc < 3)
-  {
-    fprintf(stderr, "usage: %s <input> <output> [ignored]\n", argv[0]);
-    return 1;
-  }
+    if (argc < 3) {
+        const char* self_name = basename(argv[0]);
+        fprintf(stderr, "usage: %s <input> <output> [ekey]\n", self_name);
+        return 1;
+    }
+
+    if (argc >= 4) {
+        decodeWithEKey(argv[1], argv[2], argv[3]);
+        fputs("Done\n", stderr);
+        return 0;
+    }
 
   ifstream stream_input(argv[1], ios::in | ios::binary);
   if (stream_input.fail())

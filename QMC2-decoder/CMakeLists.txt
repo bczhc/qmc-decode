@@ -26,6 +26,8 @@ add_executable (QMC2-decoder
 	"QMC2-decoder.cpp"
 	"qmcflac.cpp"
 	"qmc2.cpp"
+	"lib.cpp"
+	"decoder.cpp"
 )
 
 include_directories(../)

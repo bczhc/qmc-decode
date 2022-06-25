@@ -67,8 +67,10 @@ int qmcflac::decode(const char *fileName, const char *destFileName) {
     if ((fpO = fopen(destFileName, "wb")) == nullptr) return -1;
     u8 c[1024] = {0};
     u64 fL = getFileSize(fp), a = fL / 1024;
-    if (!fL)
-        return 0;
+    if (!fL) {
+        fputs("Cannot get file size\n", stderr);
+        return 1;
+    }
     int b = (int) (fL % 1024);
     for (int j = 0; j < a; ++j) {
         auto size = fread(c, 1, 1024, fp);
@@ -90,6 +92,7 @@ int qmcflac::decode(const char *fileName, const char *destFileName) {
     }
     if (fclose(fpO) != 0 || fclose(fp) != 0) {
         perror("Failed to close file");
+        return 1;
     }
     return 0;
 }

@@ -20,7 +20,7 @@ static_assert(read_buf_len > footer_detection_size && read_buf_len > encrypted_k
 namespace qmc2 {
     StreamCencrypt *createInstWidthEKey(const char *ekey_b64);
 
-    void decodeWithEKey(const char *input, const char *output, const char *ekey);
+    int decodeWithEKey(const char *input, const char *output, const char *ekey);
 
     int decode(const char *input, const char *output);
 }

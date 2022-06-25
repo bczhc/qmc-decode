@@ -20,11 +20,12 @@ StreamCencrypt *qmc2::createInstWidthEKey(const char *ekey_b64) {
     return stream;
 }
 
-void qmc2::decodeWithEKey(const char *input, const char *output, const char *ekey) {
+int qmc2::decodeWithEKey(const char *input, const char *output, const char *ekey) {
     auto fp_in = fopen(input, "rb");
     auto fp_out = fopen(output, "wb");
     if (fp_in == nullptr || fp_out == nullptr) {
         perror("Failed to open file");
+        return 1;
     }
 
     auto stream = createInstWidthEKey(ekey);
@@ -41,9 +42,11 @@ void qmc2::decodeWithEKey(const char *input, const char *output, const char *eke
 
     if (fclose(fp_in) != 0 || fclose(fp_out) != 0) {
         perror("Failed to close file");
+        return 1;
     }
 
     delete stream;
+    return 0;
 }
 
 int qmc2::decode(const char *input, const char *output) {
@@ -109,4 +112,5 @@ int qmc2::decode(const char *input, const char *output) {
     }
 
     delete[] buf;
+    return 0;
 }

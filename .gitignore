@@ -364,3 +364,5 @@ FodyWeavers.xsd
 
 /public/QMC2-*
 build/
+
+.idea/

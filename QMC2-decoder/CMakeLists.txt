@@ -24,9 +24,10 @@ add_library(
 
 add_executable (QMC2-decoder
 	"QMC2-decoder.cpp"
-	"QMC2-decoder.h"
+	"qmcflac.cpp"
+	"qmc2.cpp"
 )
 
-include_directories(../third_party/cpp-lib)
+include_directories(../)
 
 target_link_libraries(QMC2-decoder QMC2-crypto bczhc-cpp-lib)

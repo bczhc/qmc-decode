@@ -14,9 +14,19 @@ if (MINGW)
 	set(CMAKE_EXE_LINKER_FLAGS "-s -static-libgcc -static-libstdc++ -static")
 endif()
 
+add_library(
+        bczhc-cpp-lib STATIC
+        "../third_party/cpp-lib/string.cpp"
+        "../third_party/cpp-lib/utils.cpp"
+        "../third_party/cpp-lib/exception.cpp"
+        "../third_party/cpp-lib/utf8.cpp"
+)
+
 add_executable (QMC2-decoder
 	"QMC2-decoder.cpp"
 	"QMC2-decoder.h"
 )
 
-target_link_libraries(QMC2-decoder QMC2-crypto)
+include_directories(../third_party/cpp-lib)
+
+target_link_libraries(QMC2-decoder QMC2-crypto bczhc-cpp-lib)

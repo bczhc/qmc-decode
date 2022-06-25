@@ -14,6 +14,8 @@
 #include <string>
 #include <cassert>
 
+#include <string.hpp>
+
 // 1M buffer
 constexpr size_t read_buf_len = 1 * 1024 * 1024;
 
@@ -62,6 +64,11 @@ void decodeWithEKey(const char *input, const char* output, const char* ekey) {
 
 int main(int argc, char **argv)
 {
+    String s = "hello";
+    s += ", world";
+    cout << s.getCString() << endl;
+
+
   fprintf(stderr, "QMC2 decoder (cli) v0.0.6 by Jixun\n\n");
 
     if (argc < 3) {

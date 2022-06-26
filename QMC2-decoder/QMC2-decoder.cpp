@@ -8,16 +8,21 @@
 #include "qmcflac.h"
 #include "def.h"
 #include <array>
+#include <optional>
 
 using namespace std;
 namespace fs = std::filesystem;
 
-array<u8, 4> read_qmc2_tag(const char *file) {
+optional<array<u8, 4>> read_qmc2_tag(const char *file) {
     FILE *fp = fopen(file, "rb");
     if (fp == nullptr) {
         perror("Failed to open file");
+        return {};
     }
-    fseek(fp, 4, SEEK_END);
+    if (fseek(fp, -4, SEEK_END) != 0) {
+        perror("Failed to seek file");
+        return {};
+    }
     array<u8, 4> buf{};
     auto size = fread(buf.data(), 1, 4, fp);
     assert(size == 4);
@@ -25,7 +30,11 @@ array<u8, 4> read_qmc2_tag(const char *file) {
 }
 
 int decode_qmc2(const char *input, const char *output, const char *ekey) {
-    auto tag = read_qmc2_tag(input);
+    auto tag_res = read_qmc2_tag(input);
+    if (!tag_res.has_value()) {
+        return 1;
+    }
+    auto tag = tag_res.value();
 
     if (memcmp(tag.data(), "QTag", 4) == 0) {
 
@@ -34,7 +43,7 @@ int decode_qmc2(const char *input, const char *output, const char *ekey) {
     } else if (memcmp(tag.data(), "STag", 4) == 0) {
 
         if (ekey == nullptr) {
-            cerr << "EKey is missing for decrypting files with STag!";
+            cerr << "EKey is missing for decrypting files with STag!" << endl;
             return 1;
         }
         return qmc2::decodeWithEKey(input, output, ekey);
@@ -95,7 +104,7 @@ int decode_single(const char *input_path, const char *output_path, const char *e
         auto out_filename = fs::path(input_path).replace_extension(
                 fs::path(string(".") + replaced_ext.getCString())
         ).filename();
-        path += out_filename;
+        path /= out_filename;
         output_file = path.c_str();
     } else {
         output_file = output_path;
@@ -135,10 +144,10 @@ int main(int argc, char **argv) {
         // batch decryption
         auto iter = fs::directory_iterator(input_path);
         for (const auto &entry: iter) {
-            const string &extension = entry.path().extension().string();
+            auto extension = getFileExtension(entry.path().c_str());
 
-            if (map_contains_key(*extension_map, String(extension.c_str()))
-                && extension != "mflac0" && extension == "mgg1") {
+            if (map_contains_key(*extension_map, String(extension.getCString()))
+                && extension != "mflac0" && extension != "mgg1") {
                 decode_single(entry.path().c_str(), output_path, ekey);
             }
         }

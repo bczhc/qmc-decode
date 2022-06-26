@@ -14,7 +14,7 @@ String getFileExtension(const char *file) {
     size_t length = extension.length();
     if (length != 0) {
         assert(extension[0] == '.');
-        extension = extension.substring(1, length - 1);
+        extension = extension.substring(1, length);
     }
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "LocalValueEscapesScope"

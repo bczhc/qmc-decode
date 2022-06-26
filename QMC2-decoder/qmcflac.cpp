@@ -82,13 +82,13 @@ int qmcflac::decode(const char *fileName, const char *destFileName) {
         assert(size == 1024);
     }
     if (b) {
-        auto size = fread(c, b, 1, fp);
-        assert(size == 1024);
+        auto size = fread(c, 1, b, fp);
+        assert(size == b);
         for (int j = 0; j < b; ++j) {
             c[j] ^= nextMask_();
         }
-        size = fwrite(c, b, 1, fpO);
-        assert(size == 1024);
+        size = fwrite(c, 1, b, fpO);
+        assert(size == b);
     }
     if (fclose(fpO) != 0 || fclose(fp) != 0) {
         perror("Failed to close file");

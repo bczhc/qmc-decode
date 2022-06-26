@@ -1,5 +1,25 @@
 ﻿# QMC2-Decode
 
+## Downstream updates
+### Usage
+>qmc-decode \<input\> \<output\> [\<ekey\>]
+
+When `input` is a directory, it decrypts in batch mode, but only supports `qmcflac` and `qmc0` formats (due to `mflac0`
+and `mgg1` need `ekey`)
+
+when `output` is a directory, the output filename is automatically assigned from the extension of the input file.
+
+`ekey` is a 704-byte Base64-encoded cipher text
+
+### Supported file formats:
+
+- qmcflac (to flac)
+- qmc0 (to mp3)
+- mflac0 with STag or QTag file trailing mark (to flac; EKey is required when decrypting STag)
+- mgg1 with STag or QTag file trailing mark (to ogg; EKey is required when decrypting STag)
+
+# Original README
+
 <small><a href="#english">Click here for English readme</a></small>
 
 用于解密 `mflac` / `mgg1` 文件的小工具。

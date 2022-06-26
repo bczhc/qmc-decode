@@ -6,6 +6,10 @@
 #include "def.h"
 #include <cstdio>
 #include <cassert>
+#include <optional>
+#include <iostream>
+
+using namespace std;
 
 u8 seedMap[8][7] = {
         {0x4a, 0xd6, 0xca, 0x90, 0x67, 0xf7, 0x52},
@@ -45,13 +49,15 @@ u8 nextMask_() {
     return ret;
 }
 
-u64 getFileSize(FILE *fp) {
+optional<u64> getFileSize(FILE *fp) {
     if (fseek(fp, 0, SEEK_END) != 0) {
         perror("seek error");
+        return {};
     }
     auto pos = ftell(fp);
     if (fseek(fp, 0, SEEK_SET) != 0) {
         perror("seek error");
+        return {};
     }
     return pos;
 }
@@ -62,16 +68,21 @@ int qmcflac::decode(const char *fileName, const char *destFileName) {
     dx = 1;
     i = -1;
 
-    FILE *fp, *fpO;
-    if ((fp = fopen(fileName, "rb")) == nullptr) return -1;
-    if ((fpO = fopen(destFileName, "wb")) == nullptr) return -1;
+
+    FILE *fp = fopen(fileName, "rb");
+    FILE *fpO = fopen(destFileName, "wb");
+    if (fp == nullptr || fpO == nullptr) {
+        cerr << "Failed to open file" << endl;
+        return 1;
+    }
     u8 c[1024] = {0};
-    u64 fL = getFileSize(fp), a = fL / 1024;
-    if (!fL) {
+    auto fL = getFileSize(fp);
+    if (!fL.has_value()) {
         fputs("Cannot get file size\n", stderr);
         return 1;
     }
-    int b = (int) (fL % 1024);
+    u64 a = fL.value() / 1024;
+    int b = (int) (fL.value() % 1024);
     for (int j = 0; j < a; ++j) {
         auto size = fread(c, 1, 1024, fp);
         assert(size == 1024);

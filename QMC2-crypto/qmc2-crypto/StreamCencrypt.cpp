@@ -229,3 +229,8 @@ uint8_t StreamCencrypt::mapL(uint64_t offset)
   uint8_t value = this->rc4_key[key];
   return rotate(value, key & 0b0111);
 }
+
+StreamCencrypt::~StreamCencrypt() {
+    delete[] rc4_key;
+    delete[] S;
+}

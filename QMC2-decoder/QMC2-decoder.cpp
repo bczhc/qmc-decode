@@ -26,6 +26,12 @@ optional<array<u8, 4>> read_qmc2_tag(const char *file) {
     array<u8, 4> buf{};
     auto size = fread(buf.data(), 1, 4, fp);
     assert(size == 4);
+
+    if (fclose(fp) != 0) {
+        perror("Failed to close file");
+        return {};
+    }
+
     return buf;
 }
 
@@ -70,8 +76,8 @@ SymbolTable<String, String> *create_extension_map() {
 }
 
 template<typename K, typename V>
-bool map_contains_key(const SymbolTable<K, V> &map, const K &key) {
-    auto iter = extension_map->getIterator();
+bool map_contains_key(SymbolTable<K, V> &map, const K &key) {
+    auto iter = map.getIterator();
     while (iter.hasNext()) {
         if (iter.next().key == key) {
             return true;
@@ -140,6 +146,7 @@ int main(int argc, char **argv) {
 
     extension_map = create_extension_map();
 
+    int status = 0;
     if (fs::is_directory(input_path)) {
         // batch decryption
         auto iter = fs::directory_iterator(input_path);
@@ -153,10 +160,10 @@ int main(int argc, char **argv) {
         }
     } else {
         // for a single file
-        return decode_single(input_path, output_path, ekey);
+        status =  decode_single(input_path, output_path, ekey);
     }
 
     delete extension_map;
 
-    return 0;
+    return status;
 }

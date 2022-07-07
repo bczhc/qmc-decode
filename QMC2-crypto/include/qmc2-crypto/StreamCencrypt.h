@@ -10,7 +10,7 @@ class StreamCencrypt : public IStreamEncryptAndDecrypt
 {
 public:
   StreamCencrypt(){};
-  ~StreamCencrypt(){};
+  ~StreamCencrypt();
 
   void StreamEncrypt(uint64_t offset, uint8_t *buf, size_t len) override;
   void StreamDecrypt(uint64_t offset, uint8_t *buf, size_t len) override;

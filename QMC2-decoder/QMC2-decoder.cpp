@@ -9,6 +9,7 @@
 #include "def.h"
 #include <array>
 #include <optional>
+#include <fmt/format.h>
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -100,8 +101,6 @@ int decode_single(const char *input_path, const char *output_path, const char *e
         return 1;
     }
 
-    cout << "Decrypting " << input_path << "..." << endl;
-
     String output_file;
     if (fs::is_directory(output_path)) {
         auto replaced_ext = extension_map->get(extension);
@@ -118,6 +117,9 @@ int decode_single(const char *input_path, const char *output_path, const char *e
 
     auto output_file_str = output_file.getCString();
 
+    cout << fmt::format(R"(Decrypting "{}" -> "{}"...)", input_path, output_file_str);
+    cout.flush();
+
     if (extension == "qmcflac" || extension == "qmc0") {
         auto r = qmcflac::decode(input_path, output_file_str);
         if (r != 0) return r;
@@ -128,7 +130,8 @@ int decode_single(const char *input_path, const char *output_path, const char *e
         assert(!"unreachable");
     }
 
-    cout << "Done. Saved to " << output_file_str << endl;
+    cout << " done" << endl;
+
     return 0;
 }
 
@@ -160,7 +163,7 @@ int main(int argc, char **argv) {
         }
     } else {
         // for a single file
-        status =  decode_single(input_path, output_path, ekey);
+        status = decode_single(input_path, output_path, ekey);
     }
 
     delete extension_map;

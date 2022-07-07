@@ -3,6 +3,8 @@
 #
 cmake_minimum_required (VERSION 3.8)
 
+set (CMAKE_CXX_STANDARD 20)
+
 # Add source to this project's executable.
 
 include_directories(
@@ -31,4 +33,4 @@ add_executable (qmc-decode
 
 include_directories(../)
 
-target_link_libraries(qmc-decode QMC2-crypto bczhc-cpp-lib)
+target_link_libraries(qmc-decode QMC2-crypto bczhc-cpp-lib fmt)

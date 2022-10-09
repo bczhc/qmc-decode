@@ -1,4 +1,6 @@
 ﻿# QMC2-Decode
+ 
+***See the new repository https://github.com/bczhc/qmc-decrypt, written in Rust***
 
 ## Downstream updates
 ### Usage

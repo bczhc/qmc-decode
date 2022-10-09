@@ -9,7 +9,7 @@ and `mgg1` need `ekey`)
 
 when `output` is a directory, the output filename is automatically assigned from the extension of the input file.
 
-`ekey` is a 704-byte Base64-encoded cipher text
+`ekey` is a 704- or 364-byte Base64-encoded cipher text
 
 ### Supported file formats:
 

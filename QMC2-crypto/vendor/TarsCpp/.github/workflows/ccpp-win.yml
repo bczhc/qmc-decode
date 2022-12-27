@@ -1,0 +1,25 @@
+name: C/C++ win
+
+on: 
+  push:
+    branches:
+    - master
+
+jobs:
+  build:
+
+    runs-on: windows-2019
+    
+    steps:
+    - uses: actions/checkout@v2
+    - uses: shogo82148/actions-setup-perl@v1
+      with:
+        perl-version: '5.32'
+        distribution: strawberry
+    - run: perl -V
+    - name: git
+      run: git submodule update --init --recursive
+    - name: configure
+      run: mkdir build;cd build; cmake --version; cmake .. -A X64 -DTARS_MYSQL=ON -DTARS_PROTOBUF=ON  -DTARS_SSL=ON
+    - name: make
+      run: cd build; cmake --build . --config release
